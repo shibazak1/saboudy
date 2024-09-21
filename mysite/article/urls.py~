@@ -1,0 +1,16 @@
+from django.contrib import admin
+from django.urls import include, path, reverse_lazy
+from . import views
+
+
+urlpatterns = [
+
+    path("", views.ArticleList.as_view(),name="all"),
+    path("article_detail",views.ArticleDetail.as_view(),name="article_detail"),
+    path("article_create",views.ArticleCreate.as_view(),name="article_create"),
+
+
+
+    
+
+]

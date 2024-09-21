@@ -1,0 +1,14 @@
+<!-- myapp/templates/home.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Detial</title>
+</head>
+<body>
+  <a href="{% url 'books' %}"><p>Back to the list</p></a>
+  <p><b>{{book.name}}</b></p>
+  <p>{{book.auther}}</p>
+  <p>{{book.puplisher}}</p>
+  <p>{{book.genre}}</p>
+</body>
+</html>

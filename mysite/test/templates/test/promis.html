@@ -1,0 +1,68 @@
+{%extends "test/index.html"%}
+
+{%block content%}
+
+
+
+    <button onclick="loadurl('hddp://x/broken','syntex'); return false">url syntex error</button>
+    <p id="syntex">this is will change</p>
+
+    <button onclick="loadurl('/broken','broken'); return false">request 404</button>
+    <p id="broken">this is will change</p>
+
+    <button onclick="loadurl('{%url 'index2'%}','json'); return false">Jason paras fial</button>
+    <p id="json">this is what will change</p>
+
+    <button onclick="loadurl('{%url 'json'%}','work'); return false">working </button>
+    <p id="work">this what will change</p>
+
+
+
+
+    <script type="text/javascript">
+
+      function loadurl(url,id){
+
+	  console.log("loading "+url);
+	  document.getElementById(id).style.color = 'orange';
+	  document.getElementById(id).innerHTML = "loading...";
+
+	  fetch(url,{catch:"no-store"})
+	      .then((response)=>{
+
+		  const json_data = response.json();
+		  return json_data;
+	      })
+	      .then((data)=>{
+
+		  console.log("data"+data);
+		  document.getElementById(id).style.color = "green";
+		  document.getElementById(id).innerHTML = "data"+data.name;
+		  
+
+	      })
+	      .catch((error)=>{
+
+		  document.getElementById(id).style.color = "red";
+		  document.getElementById(id).innerHTML = error;
+
+
+	      });
+	  
+
+
+
+
+
+      }
+
+
+
+</script>
+
+
+
+
+    
+
+   {%endblock%}

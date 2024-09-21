@@ -1,0 +1,42 @@
+{%extends "ads3/base_menu.html"%}
+
+{%load crispy_forms_tags%}
+{%block content%}
+
+
+  <form action="" method="post" id="upload_form" enctype="multipart/form-data">
+
+    {%csrf_token%}
+
+    {{form|crispy}}
+
+    <input type="submit" value="submit">
+    <br/>
+    <a href="{%url 'all'%}">Concel</a>
+      
+    
+    </form>
+
+
+
+<script>
+
+  document.getElementById("upload_form").addEventListener("submit", function() {
+  console.log('Checking file size');
+  if (window.File && window.FileReader && window.FileList && window.Blob) {
+      var file = document.getElementById('id_{{ form.upload_field_name }}').files[0];
+      if (file && file.size > {{ form.max_upload_limit }} ) {
+          alert("File " + file.name + " of type " + file.type + " must be < {{ form.max_upload_limit_text }}");
+      return false;
+    }
+  }
+});
+
+
+
+
+</script>
+
+
+
+{%endblock%}

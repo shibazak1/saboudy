@@ -1,0 +1,61 @@
+{%extends "chat/base_bootstrap5"%}
+
+
+{%block content%}
+
+<h1>Chat</h1>
+
+
+<form action="" method="post">
+
+
+  {%csrf_token%}
+  
+  <input type="text">
+  <input type="submit",value="Send">
+
+  </form>
+
+
+<div id ="messagecontent">
+
+  <p>Sending......</p>
+
+</div>
+
+
+<script type="text/javascript">
+
+
+
+  async function LoadMessage(){
+
+      console.log("Sending Request");
+
+      
+
+      
+
+
+
+
+
+
+
+  }
+
+
+  
+
+
+
+
+
+</script>
+
+
+
+
+
+
+{%endblock%}

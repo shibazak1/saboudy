@@ -1,0 +1,15 @@
+<!-- myapp/templates/home.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Books list</title>
+</head>
+<body>
+  <h1>My Books</h1>
+  <ul>
+    {%for item in books %}
+    <li><a href="{% url 'book' %}"><b>{{item.name}}</b></a></li>
+    {%endfor%}
+  </ul>
+</body>
+</html>

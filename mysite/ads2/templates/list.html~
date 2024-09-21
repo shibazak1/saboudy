@@ -1,0 +1,17 @@
+{%extends "base_menu.html"%}
+
+
+{%block content%}
+
+<ul>
+{%for ad in adlist%}
+
+
+  <li><a href="{url 'ad_detail' ad.id}">{{ad.title}}</a> | <a href ="">Edit</a> | <a href="">Delete</a></li>  
+
+{%endfor%}
+</ul>
+
+
+
+{%endblock%}

@@ -1,0 +1,15 @@
+{%extends "ads2/base.html"}
+
+
+
+{%block content%}
+
+<h1><b>Wellcom to our anime list with comments enjoy >o<</b></h1>
+							 
+							 
+
+							 
+
+
+
+{%endblock%}

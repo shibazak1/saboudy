@@ -1,0 +1,20 @@
+{% extends "ads2/base_menu.html"%}
+
+
+{% block content %}
+<h1>Comment Delete Page</h1>
+<p>
+{{comment.text}}
+</p>
+<p>Are you sure wanna delete this comment ? </p>
+
+<form action="" method="post">
+
+  {%csrf_token%}
+  <input type="submit" value="Yes">
+  <a href="{%url 'ad_detail' comment.ad.id%}">No</a>
+
+</form>
+
+
+{%endblock%}

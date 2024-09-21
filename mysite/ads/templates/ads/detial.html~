@@ -1,0 +1,27 @@
+{%extends 'ads/base_menu.html'%}
+
+
+{%block content%}
+
+<h1>{{ad_detial.title}}</h1>
+<br/>
+<p>
+
+  {{ad_detial.text}}
+  
+</p>
+
+<br/>
+
+<p>{{ad_detai.price}}</p>
+
+
+{%if ad_detial.owner==user%}
+
+<a href="">Edit</a><br/>
+<a href="">Delete</a>
+
+{%endif%}
+
+
+{%endblock%}

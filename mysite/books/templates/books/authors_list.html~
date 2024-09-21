@@ -1,0 +1,22 @@
+{%extends "books/basic.html"%}
+
+
+{%block content%}
+<h1>Authors</h1>
+
+<ul>
+
+  {%if authors%}
+  {%for author in authors%}
+
+  <li>
+    <p>{{author.name}} <b>|</b> <a href="{% url 'authorupdate' author.id %}">Update</a> <b>|</b> <a href=""></a> </p>
+  </li>
+  {%endfor%}
+
+</ul>
+{%else%}
+<p>There is no Authors</p>
+{%endif%}
+
+{%endblock%}

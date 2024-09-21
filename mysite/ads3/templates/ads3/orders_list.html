@@ -1,0 +1,277 @@
+
+{%extends "ads3/base_menu.html"%}
+{% load is_driver %}
+
+
+{%block content%}
+
+{%if order_list%}
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Order Id</th>
+      <th scope="col">Date</th>
+      <th scope="col">Total</th>
+      <th scope="col">Status</th>
+      <th scope="col"> map </th>
+      
+    </tr>
+  </thead>
+  <tbody>
+    
+    {%for order in order_list%}
+    <tr id="row-{{order.id}}">
+      <th scope="row"></th>
+      <td><a href="{%url 'order_detail' order.id %}">{{order.id}}</a></td>
+      <td>{{order.created_at}}</td>
+      <td>{{order.total_amount}}</td>
+      <td>{{order.status}}</td>
+      <td><a href="{% url 'driver_map' order.id %}">See Order</a></td>
+      
+      <td>
+	<form action="{%url 'pick_order'%}" method="post" id="order-{{order.id}}">
+	  {%csrf_token%}
+	  <button type="submit" class="btn btn-dark" onclick="getready({{order.id}}); return false;">Pick</button>
+	</form>	
+      </td>
+    </tr>
+    {%endfor%}
+  </tbody>
+  
+</table>
+
+{%else%}
+<p> you have no order</p>
+
+{%endif%}
+
+
+
+
+<script type="text/javascript">
+
+  let watchId = null;
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+        .then((registration) => {
+            console.log('Service worker registered successfully with scope: ' + registration.scope);
+
+	    navigator.serviceWorker.addEventListener('message',(event)=>{
+
+		if(event.data && event.data.type === 'order-delivered'){
+
+		    if(watchId !== null){
+
+
+			
+			navigator.geolocation.clearWatch(watchId);
+			console.log("now i stopped geolocation");
+		    }
+		}
+	    });
+	    
+        })
+        .catch((error) => {
+            console.log('Service worker registration failed: ' + error);
+        });
+}
+
+  function triggerBackgroundSync(order_id, url, csrfToken, latitude, longitude) {
+    console.log('I am in triggerBackgroundSync');
+
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        navigator.serviceWorker.ready
+            .then((swRegistration) => {
+                // Send message to service worker with necessary data
+                navigator.serviceWorker.controller.postMessage({
+                    'type': 'start-sync',
+                    'order_id': order_id,
+                    'url': url,
+                    'csrftoken': csrfToken,
+                    'latitude': latitude,
+                    'longitude': longitude,
+		    
+                });
+
+                console.log('I am about to register sync');
+                return swRegistration.sync.register('sync-track-driver-location');
+            })
+            .catch((error) => {
+                console.log('Background sync failed: ' + error);
+            });
+    }
+}
+
+function getready(id) {
+    const form = document.getElementById("order-" + id);
+    if (!form) {
+        console.error('Form not found for ID: order-' + id);
+        return;
+    }
+
+    
+    const url = form.action;
+    console.log('I got the URL: ' + url);
+    const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    console.log('CSRF Token: ' + csrfToken);
+
+    watchId = navigator.geolocation.watchPosition(success, error);
+
+    function success(position) {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        console.log('Latitude: ' + latitude + ', Longitude: ' + longitude);
+
+        // Now call triggerBackgroundSync with the geolocation data
+        triggerBackgroundSync(id, url, csrfToken, latitude, longitude);
+    }
+
+    function error(err) {
+        alert("Geolocation error: " + err.message);
+    }
+
+    document.getElementById('row-' + id).innerHTML = "";
+}
+
+
+
+  
+/*
+  function makeConnection(order_id){
+
+      const socket = new WebSocket('ws://'+window.location.host+'ws/track'+order_id +'/');
+  }
+  
+
+  const socket.onmessage = function(e){
+
+      const data = JSON.parse(e.data);
+      console.log("the data is "data);
+
+      if(data.status == 'DE'){
+
+	  socket.close();
+
+      }
+
+  }
+
+
+  function sendLocation(lat,lng,order_id){
+
+      socket.send(JSON.stringify({
+
+	  'order_id':order_id,
+	  'latitude':lat,
+	  'longitdue':lng,
+
+
+      }));
+
+
+  }
+  
+
+  function getLocation(id){
+
+      const order_id = id
+      makeConnection(order_id);
+      navigator.geolocation.watchPosition(success , error);  // Use getCurrentPosition for a one-time location fetch
+
+      function success(position){
+
+	  const lat = position.coords.latitude;
+	  const lng = position.coords.longitude;
+
+	  sendLocation(lat,lng,order_id);
+	  
+
+      }
+      function error(error){
+
+	  alert("sorry your location  is not available");
+
+      }
+
+
+  }
+
+  */
+
+    /*
+  function getLocation(id) {
+      console.log('i am in getlocation');
+
+      let watchId;// id use to stop the geolocation.watch when the order is delivered
+      
+      const form = document.getElementById("order-" + id);
+      if (!form) {
+          console.error('Form not found for ID: order-' + id);
+          return;
+      }
+      
+      const url = form.action;
+      console.log('i get the url'+url);
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+      console.log('csrftoken'+csrfToken);
+      
+      function success(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          console.log('Start fetch with latitude:', latitude, 'longitude:', longitude);
+	  
+	  fetch(url, {
+	      method: 'POST',
+	      headers: {
+		  'X-CSRFToken': csrfToken,
+		  'Content-Type': 'application/json'
+	      },
+	      body: JSON.stringify({
+		  'latitude': latitude,
+                  'longitude': longitude,
+                  'order_id': id
+              }),
+          })
+              .then(response => {
+		  console.log('Response received:', response);
+		  return response.json();  // Parse the JSON from the response
+              })
+              .then(data => {
+		  document.getElementById('row-'+id).innerHTML = "";
+		  if (data.order_status == 'DE') {
+                      console.log('order '+ id + "is Delivered >w< ");
+		      navigator.geolocation.clearWatch(watchId)
+		      
+		      
+		
+		  } else {
+                      console.error("Data received but success is false");
+		      location.reload();
+		  }
+              })
+              .catch(error => {
+		  console.error('Fetch error:', error);
+              });
+      }
+      
+      function error(err) {
+          console.error('Error in geolocation:', err);
+          alert("Sorry, no position available.");
+      }
+      
+      watchId =  navigator.geolocation.watchPosition(success , error);  // Use getCurrentPosition for a one-time location fetch
+      console.log('Attempting to get the location');
+      }
+
+      */
+
+      
+</script>
+
+
+
+
+
+{%endblock%}

@@ -1,0 +1,19 @@
+<html>
+
+  <body>
+
+    <p>your data is </p><br/>
+
+    <p>name</p>{{name}}
+    <p>email</p>{{email}}
+
+    <p>you can logout : {{name}}</p>
+    
+    <a href="{url 'logout'}">logout</a>
+
+  </body>
+
+
+
+
+</html>

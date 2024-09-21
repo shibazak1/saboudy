@@ -1,0 +1,26 @@
+{%extends "ads/base_menu.html"%}
+
+
+{%block content%}
+
+<table>
+
+  <form action="" method="post">
+
+    {%csrf_token%}
+
+    {{form.as_table}}
+
+    <input type="submit" value="submit">
+    <br/>
+    <a href="{%url 'all'%}">Consel</a>
+      
+    
+    </form>
+
+
+</table>
+
+
+
+{%endblock%}

@@ -1,0 +1,24 @@
+{%extends "article/basic.html"%}
+
+
+{%block content%}
+
+<table>
+
+  <form action="" method="post">
+
+    {%csrf_token%}
+    {{form.as_table}}
+
+    <input type="submit" value="submit">
+    <a href="{%url 'all' %}">Concel</a>
+
+  </form>
+
+
+
+
+</table>
+
+
+{%endblock%}

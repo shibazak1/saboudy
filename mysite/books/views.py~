@@ -1,0 +1,70 @@
+from django.shortcuts import render , redirect
+from django.views import View
+from django.urls import reverse_lazy
+from .models import Book ,Author
+from .forms import AuthorForm
+# Create your views here.
+
+def books_list(request):
+    books = Book.objects.all()
+    ctx = {"books":books}
+
+    return render(request,"books/books.html",ctx)
+
+class AuthorView(View):
+    
+    def get(self ,request):
+        authors = Author.objects.all()
+        ctx = {"authors":authors}
+
+        return render(request,"books/authors_list.html",ctx)
+        
+
+
+
+class AddAuthor(View):
+    
+    def get(self,request):
+
+        form = AuthorForm()
+        ctx  = {"form":form}
+        return render(request,"books/addauthor.html",ctx)
+
+    def post(self,request):
+
+        form = AuthorForm(request.POST)
+        if not form.is_valid():
+            ctx = {"form":form}
+            return render(request,"books/addauthor.html",ctx)
+        
+        form.save()
+        return redirect(reverse_lazy("books_list"))
+
+
+class AuthorUpdate(View):
+
+    def get(self,request,pk):
+
+        author_data = Author.objects.get(pk=pk)
+        form = AuthorForm(author_data)
+
+        ctx = {"form":form}
+        return render(request,"books/addauthor.html",ctx)
+
+    def post(self,request):
+
+        form = AuthorForm(request.POST)
+
+        if not form.is_valid():
+            ctx = {"form":form}
+            return render(request,"books/addauthor.html",ctx)
+        form.save()
+        return redirect(reverse_lazy("authorview"))
+
+    
+
+        
+            
+        
+        
+        

@@ -1,0 +1,19 @@
+{% extends "article/basic.html"%}
+
+
+{% block content%}
+
+<h1>{{article.title}}</h1>
+{%if article.owner == user %}
+<a href = "{%url 'article_update' article.id%}">Update</a>
+<a href="{%url 'article_delete' article.id %}">Delete<a>
+    {%endif%}
+
+    <p>{{article.text}}</p>
+
+
+    <a href="{%url 'all' %}" h>All Articles</a>
+
+
+
+{% endblock%}

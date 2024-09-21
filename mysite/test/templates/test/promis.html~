@@ -1,0 +1,70 @@
+<html>
+
+
+  <body>
+
+
+    <button onclick="loadurl() return false">url syntex error</button>
+    <p id="syntex">this is will change</p>
+
+    <button onclick="loadurl() return false">request 404</button>
+    <p id="broken">this is will change</p>
+
+    <button onclick="loadurl() return false">Jason paras fial</button>
+    <p id="json">this is what will change</p>
+
+    <button onclick="loadurl() return false">working </button>
+    <p id="work">this what will change</p>
+
+
+    <script>
+
+      
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html>

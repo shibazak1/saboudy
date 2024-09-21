@@ -1,0 +1,18 @@
+
+<html>
+
+
+  <body>
+
+    <p><a href = "{% url "getcookies" %}"></a></p>
+
+
+
+
+  </body>
+
+
+
+
+
+</html>

@@ -1,0 +1,16 @@
+{% extends "article/basic.html"%}
+
+
+{% block content%}
+
+<h1>{{article.title}}</h1>
+{%if article.owner == user %}
+<a href = "">Update</a>
+<a href="">Delete<a>
+    {%endif%}
+
+  <p>{{article.text}}</p>
+
+
+
+{% end block%}

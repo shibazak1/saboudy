@@ -1,0 +1,10 @@
+<!-- myapp/templates/home.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Detial</title>
+</head>
+<body>
+    <h1></h1>
+</body>
+</html>

@@ -1,0 +1,27 @@
+
+{%extends "books/basic"%}
+
+{%block content%}
+
+<p>Are you sure you wanna delet this book</p>
+
+<form action="" method="post">
+
+  {%csrf_token%}
+
+  <table>
+
+    {{form.as_table}}
+
+
+    <table>
+
+      <input type="submit" value="Yes">
+      <p><a href="{%url 'book_list'%}">No</a></p>
+  
+
+
+</form>
+
+
+{%end block%}

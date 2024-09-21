@@ -1,0 +1,89 @@
+{%extends 'base_bootstrap.html' %}
+
+
+{%block content%}
+
+<h1>Chat chan <b> >< </b> </h1>
+
+
+<form action="" method="post">
+
+
+  {%csrf_token%}
+  
+  <input type="text" name='message' size=60>
+  <input type="submit",values="Send">
+
+  </form>
+
+<p>
+<div id ="messagecontent">
+
+  <p>Sending......</p>
+
+</div>
+</p>
+
+<script type="text/javascript">
+
+
+
+  async function LoadMessage(){
+
+      console.log("Sending Request");
+
+
+      fetch("{%url 'messages'%}",{catch:"no-store"})
+	  .then((response)=>{
+	      
+	      return response.json();
+	  })
+	  .then((data)=>{
+
+	      console.log("data",data);
+	      document.getElementById("messagecontent").innerHTML = "";
+	      for(var i=0;i<data.length;i++){
+
+		  message = data[i];
+		  document.getElementById('messagecontent').innerHTML +=
+		      '<p>'+message[0]+'</p>'+'<br/>&nbsp;&nbsp;'+'<p>'+message[1] +'</p>';
+		  
+
+	      }
+
+	      setTimeout('LoadMessage()',4000);
+	      
+
+
+	  })
+	  .catch((error)=>{
+
+	      alert(error);
+
+	  });
+
+
+
+      
+  }
+
+  
+document.addEventListener("DOMContentLoaded", function(){
+    setTimeout('LoadMessage()', 2000);
+});
+
+
+  console.log("i am after it");
+
+
+
+
+
+</script>
+
+
+
+
+
+
+{%endblock%}

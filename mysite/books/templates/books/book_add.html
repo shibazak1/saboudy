@@ -1,0 +1,18 @@
+{%extends 'books/basic.html'%}
+
+
+{%block contents%}
+
+<form action="" method="post">
+  {%csrf_token%}
+  <table>
+
+    {{form.as_table}}
+    </tabel>
+
+<input type="submit" value="submit">
+<p><a href="{%url 'books_list'%}">Cencel</a></p>
+</from>
+
+
+{%endblock%}

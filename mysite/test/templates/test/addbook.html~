@@ -1,0 +1,49 @@
+
+<html>
+
+
+  <body>
+
+    <h1>add your book</h1>
+    <br/>
+
+    <form>
+
+      <label for="name"></label>
+      <input type="text" name="name"/>
+      <br/>
+
+      <label for="auther"></label>
+      <input type="text" name="auther"/>
+      <br/>
+
+      <label for="puplisher"></label>
+      <input type="text" name="puplisher"/>
+      <br/>
+
+      <label for="type"></label>
+      <input type="text" name="type"/>
+      <br/>
+
+      {%csrf_token%}
+
+      <input type="submit" value="submit"/>
+      
+      
+      
+      
+
+
+
+    </form>
+	
+
+
+
+
+  </body>
+
+
+
+
+</html>
