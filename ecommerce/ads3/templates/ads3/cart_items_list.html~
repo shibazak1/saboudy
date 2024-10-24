@@ -1,0 +1,202 @@
+{%extends "ads3/base_menu.html"%}
+{%load custom_filter%}
+
+
+{%block content%} 
+
+  <div class="container mt-4">
+    <h2>Your Cart</h2>
+    {%if items%}
+     <h3 id="total">{{total_cart_price}} </h3>
+    {%endif%}
+    <hr>
+  
+    <div class="row justify-content-center"> <!-- Bootstrap Grid System -->
+        {% if items %}
+            {% for item in items %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center"> <!-- Adjust column width based on screen size -->
+                <div class="card" style="width: 100%;"> <!-- 100% width to make it responsive -->
+                    <img src="{{item.image_url}}" class="card-img-top" alt="{{ item.title }}" style="object-fit: cover; height: 200px;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.title }}</h5>
+                        <p class="card-text">Description of the item.</p>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li id = "quantity-{{item.variation_key}}" class="list-group-item">Quantity: {{ item.quantity }} Color:{{item.color}}  Size:{{item.size}}</li>
+                        <li class="list-group-item">Price Per Item: ${{ item.price }}</li>
+                        <li id ="price-{{item.variation_key}}" class="list-group-item">
+			  Total Price: ${{item.total_price}}</li>
+                    </ul>
+                    <div class="card-body">
+                        <div class="btn-group" role="group" aria-label="Modify quantity">
+                          <form action="{% url 'update_cart' %}" method="post"
+				id="add-cart-{{item.variation_key}}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-dark" style="margin-right:5px"
+					onclick="changecart('{{item.variation_key}}','add'); return false;">+</button>
+                            </form>
+
+                            <form action="{% url 'update_cart' %}" method="post"
+				  id="delete-cart-{{item.variation_key}}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-dark"
+					onclick="changecart('{{item.variation_key}}','delete');return false;">-</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>There are no items in your cart. Please add items to your cart.</p>
+        {% endif %}
+    </div>
+
+    {% if items %}
+    <div id ="hybrid "class="d-flex justify-content-end mt-4">
+        <form action="{% url 'delivery_cost' %}" method="post" id="location">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-dark" onclick="getlocation();return false;">
+                <i class="bi bi-cart-check-fill">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+                        <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708"/>
+                    </svg>
+                </i>
+                <b>CheckOut</b>
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+  <script type="text/javascript">
+
+    function changecart(variation_key, action) {
+	const form = document.getElementById(action + "-cart-" + variation_key);
+	const url = form.action;
+	const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+	//get the total price of cart
+	var total_cart_price = document.getElementById('total').textContent;
+	
+	fetch(url, {
+            method: 'POST',
+            headers: { 
+		'Content-Type': 'application/json',
+		'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+		'key': variation_key, 
+		'action': action,
+		'total_cart_price':total_cart_price// Send the action (increment, decrement, or remove)
+            }),
+	})
+	    .then((response) => {
+		if (!response.ok) {
+		    throw new Error('Network response was not ok');
+		}
+		return response.json();
+	    })
+	    .then((data) => {
+		console.log("Server response:", data);
+		if (data.success) {
+		    if(data.remove){
+			window.location.reload();}
+		    else{
+		    for(let i in data){
+			if(i==='success')continue;
+			const elemId = i+'-'+variation_key;
+			const elem = document.getElementById(elemId);
+			if(elem){
+			    elem.innerHTML = i+" "+data[i];
+
+			}
+
+			
+		    }
+		    document.getElementById('total').innerHTML =  data.total_cart_price;
+		    }
+		    //window.location.reload();  // Reload the page to show updated cart
+		} else {
+		    alert(data.message);  // Show an error message
+		}
+	    })
+	    .catch((error) => {
+		console.error("Fetch error:", error);
+	    });
+    }
+    
+
+    
+
+
+      function getlocation(){
+      
+      console.log('i am in getlocation');
+      const form = document.getElementById("location");
+      console.log('i get the form ');
+      const url = form.action;
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+      //const formData = new FormData(form);
+      
+      navigator.geolocation.getCurrentPosition(success);
+      console.log('try to get location');
+    
+	function success(position){
+
+	    const longitude = position.coords.longitude;
+	    const latitude = position.coords.latitude;
+	    console.log(' i am in success and i get the location');
+
+	    
+	    console.log("start to fetch");
+	    fetch(url,{
+		method:'POST',
+		headers:{'X-CSRFToken':csrfToken,
+			 'Content-Type':'application/json'},
+		body:JSON.stringify(
+		    
+		    {
+			'latitude':latitude,
+			'longitude':longitude
+			
+		    }
+		),
+	    })
+		.then((response)=>{
+		    console.log('responded was returned'+response);
+		    return response.json();
+		    
+		})
+		.then((data)=>{
+		    
+		    if(data.success){
+			
+			console.log('start redirct to '+data.redirct_url);
+			window.location.href= data.redirect_url;
+			console.log("finsh redirct");
+			
+		    }
+		    else{
+			alert(data.message)
+		    }
+		})
+		.catch((error)=>{
+		    
+		    alert("erorr!"+error);
+		});
+	    
+
+	}
+	
+
+	
+
+    }
+   
+
+  </script>
+
+  
+
+  
+{%endblock%}

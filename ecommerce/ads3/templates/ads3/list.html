@@ -1,0 +1,191 @@
+{% extends "ads3/base_menu.html" %}
+{%load is_driver%}
+{% block content %}
+
+
+<div class="container tm-4">
+
+  {% if adlist %}
+  <div class="row justify-content-center">
+    
+      {% for ad in adlist %}
+      <div class="col-6 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center"> <!-- Bootstrap grid with responsive columns -->
+	
+        <div class="card" style="width:100%;">
+	  
+                {% if ad.variants.first.image %}
+                <a href="{% url 'ad_detail' ad.id %}">
+                    <img src="/media/{{ad.variants.first.image}}" class="card-img-top" alt="{{ ad.title }}" width="300" height="200">
+                </a>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ ad.title }}</h5>
+                    {% if user.is_superuser %}
+		    
+                    <p class="card-text">
+                        <a href="{% url 'ad_update' ad.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </a>
+                        <a href="{% url 'ad_delete' ad.id %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </p>
+		    {% endif %}
+		    
+		    {% if not user|is_driver %}
+                    <form action="{% url 'add_to_cart'%}" method="post" id = "add-cart-{{ad.id}}" class="mt-2" >
+                      {% csrf_token %}
+		      <input type="hidden" name="title" value="{{ ad.title }}">
+		      <input type="hidden" name="color" value="{{ ad.variants.first.color.id }}">
+		      <input type="hidden" name="size" value="{{ ad.variants.first.size }}">
+		      <input type="hidden" name="price" value="{{ ad.variants.first.price }}">
+		      <input type="hidden" name="image_url" value="/media/{{ ad.variants.first.image }}">
+		      <input type="hidden" name="quantity" value="1">
+                      <button type="submit" class="btn btn-dark" onclick="addcart({{ad.id}}); return false;">Add to Cart</button>
+                    </form>
+                    
+                   
+                    <div class="mt-3">
+                        <a href="#" onclick="favpost('{% url 'unfavourite' ad.id %}', {{ ad.id }}); return false;"
+                            {% if ad not in fav_ads %} style="display:none" {% endif %}
+                            id="favourite_star_{{ ad.id }}">
+                            <i class="fas fa-star" style="color: orange;"></i>
+                        </a>
+                        <a href="#" onclick="favpost('{% url 'favourite' ad.id %}', {{ ad.id }}); return false;"
+                            {% if ad in fav_ads %} style="display:none" {% endif %}
+                            id="unfavourite_star_{{ ad.id }}">
+                            <i class="far fa-star"></i>
+                        </a>
+                    </div>
+		    {%endif%}
+                   
+                </div>
+		
+		
+
+        </div>
+	
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<h1><p>There are no ads</p></h1>
+{% endif %}
+
+
+
+
+
+<script type="text/javascript">
+function toggleInlineDisplay(star_id) {
+    var elem = document.getElementById(star_id);
+    if (window.getComputedStyle(elem).display == "inline") {
+        elem.style.display = 'none';
+        elem.dataset.previousDisplay = 'inline';
+    } else if (window.getComputedStyle(elem).display == "block") {
+        elem.style.display = 'none';
+        elem.dataset.previousDisplay = 'block';
+    } else {
+        if (typeof elem.dataset.previousDisplay == 'string') {
+            elem.style.display = elem.dataset.previousDisplay;
+        } else {
+            elem.style.display = 'inline';
+        }
+    }
+}
+
+function favpost(url, id) {
+    console.log("posting to " + url);
+    fetch(url, { method: 'POST', body: '{}' })
+        .then((response) => {
+            console.log("finished posting " + url);
+            toggleInlineDisplay("favourite_star_" + id);
+            toggleInlineDisplay("unfavourite_star_" + id);
+        })
+        .catch((error) => {
+            alert(error);
+        });
+}
+  
+
+
+  function addcart(itemId) {
+    const form = document.getElementById("add-cart-" + itemId);
+    const url = form.action;
+    const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    // Collect form data
+    const title = form.querySelector('input[name="title"]').value;
+    const color = form.querySelector('input[name="color"]').value;
+    const size = form.querySelector('input[name="size"]').value;
+    const price = form.querySelector('input[name="price"]').value;
+    const quantity = form.querySelector('input[name="quantity"]').value;
+    const image_url = form.querySelector('input[name="image_url"]').value;
+
+    const button = form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.innerHTML = '<div class="spinner-border" role="status"></div>';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            "id": itemId,
+            "title": title,
+            "color": color,
+            "size": size,
+            "price": price,
+            "quantity": quantity,
+            "image_url": image_url
+        }),
+    })
+    .then(response => {
+        // Check if user is not authenticated (403 forbidden)
+        if (response.status === 403) {
+            return response.json().then(data => {
+                window.location.href = data.redirect_url;
+            });
+        }
+        // If response is not OK (status code not in the 200-299 range)
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();  // Parse the response as JSON
+    })
+    .then(data => {
+        // Handle success
+    console.log("Server responded with data:", data);
+    
+    button.disabled = false;
+    button.innerHTML = 'Add To Cart';
+    if(data.length){
+    
+    var cartLength = document.getElementById('cart-length');
+    cartLength.innerHTML = data.length;
+    
+    }
+    else{
+    console.log("no data length");
+    }
+    })
+    .catch(error => {
+        // Handle any errors that occurred during the fetch
+        console.error("Fetch error:", error);
+        button.disabled = false;
+        button.innerHTML = 'Add To Cart';
+        alert("Error: " + error.message);
+    });
+}
+
+
+
+
+  
+  
+</script>
+
+{% endblock %}

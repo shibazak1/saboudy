@@ -1,0 +1,11 @@
+{%extends 'ads3/base_bootstrap.html'%}
+
+
+{%block content%}
+<h1>Unable to connect to the Internet</h1>
+<img src="">
+
+
+</img>
+{%endblock%}
+

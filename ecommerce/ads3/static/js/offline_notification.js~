@@ -1,0 +1,19 @@
+
+
+var offlineNotification = document.getElementById("offline");
+
+function showOfflineNotification(){
+
+   
+}
+
+
+function hideOfflineNotification(){
+    
+
+}
+
+
+
+window.addEventListener('offline',showOfflineNotification);
+window.addEventListener('online',hideOfflineNotification);

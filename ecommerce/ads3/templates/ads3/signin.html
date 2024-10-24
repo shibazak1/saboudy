@@ -1,0 +1,101 @@
+
+
+{%extends 'base_bootstrap.html'%}
+
+
+{% load crispy_forms_tags %}
+
+{%block content%}
+<!--
+<form method="post" action="{%url 'signin'%}">
+
+  {%csrf_token%}
+
+  {{form|crispy}}
+
+  <input type="submit" value="submit">
+  
+</form>
+-->
+
+
+
+
+
+
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh; background-color: #fff;">
+  <div class="p-4" style="width: 320px;"> <!-- Card styling is removed -->
+
+    <h3 class="text-center mb-4">Create an Account</h3>
+
+    <!-- Check for form errors -->
+    {% if form.errors %}
+      <p class="text-danger text-center">Please fix the errors below and try again.</p>
+    {% endif %}
+
+    <!-- Form starts here -->
+    <form method="post" action="{% url 'signin' %}"> <!-- Adjust the 'signin' URL as per your path for sign-up -->
+      {% csrf_token %}
+
+      
+      <!-- Floating label for username -->
+      <div class="form-floating mb-3">
+        <input type="text" class="form-control" id="floatingUsername" placeholder="Username" name="username" value="{{ form.username.value|default_if_none:'' }}" required>
+        <label for="floatingUsername">Username</label>
+        {% if form.username.errors %}
+          <div class="text-danger">{{ form.username.errors }}</div>
+        {% endif %}
+      </div>
+
+      
+      <!-- Floating label for phone numebr -->
+      <div class="form-floating mb-3">
+        <input type="text" class="form-control" id="floatingUsername" placeholder="Phone Number" name="phone_number" value="{{ form.phone_number.value|default_if_none:'' }}" required>
+        <label for="floatingUsername">Phone Number</label>
+        {% if form.phone_number.errors %}
+          <div class="text-danger">{{ form.phone_number.errors }}</div>
+        {% endif %}
+      </div>
+
+
+      <!-- Floating label for email -->
+      <div class="form-floating mb-3">
+        <input type="email" class="form-control" id="floatingEmail" placeholder="Email address" name="email" value="{{ form.email.value|default_if_none:'' }}" required>
+        <label for="floatingEmail">Email address</label>
+        {% if form.email.errors %}
+          <div class="text-danger">{{ form.email.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Floating label for password1 -->
+      <div class="form-floating mb-3">
+        <input type="password" class="form-control" id="floatingPassword1" placeholder="Password" name="password1" required>
+        <label for="floatingPassword1">Password</label>
+        {% if form.password1.errors %}
+          <div class="text-danger">{{ form.password1.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Floating label for password2 -->
+      <div class="form-floating mb-3">
+        <input type="password" class="form-control" id="floatingPassword2" placeholder="Confirm Password" name="password2" required>
+        <label for="floatingPassword2">Confirm Password</label>
+        {% if form.password2.errors %}
+          <div class="text-danger">{{ form.password2.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Submit button -->
+      <button class="btn btn-primary btn-lg w-100" type="submit">Sign Up</button>
+
+    </form>
+
+    <!-- Footer -->
+    <div class="text-center mt-4 text-muted">
+      &copy; 2017–2024
+    </div>
+  </div>
+</div>
+
+{%endblock%}

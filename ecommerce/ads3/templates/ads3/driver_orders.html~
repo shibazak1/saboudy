@@ -1,0 +1,123 @@
+{%extends "ads3/base_menu.html"%}
+
+
+
+{%block content%}
+
+
+{%if driverorder_list%}
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Order Id</th>
+      <th scope="col">Picked Up At</th>
+      <th scope="col">Total</th>
+      <th scope="col">Status</th>
+      <th scope="col">Map</th>
+      
+      <!--
+      <th scope="col">Delivered</th>
+      -->
+    </tr>
+  </thead>
+  <tbody>
+    
+    {%for d_order in driverorder_list%}
+    <tr>
+      <th scope="row"></th>
+      <td><a href="{%url 'order_detail' d_order.order.id %}">{{d_order.order.id}}</a></td>
+      <td>{{d_order.picked_at}}</td>
+      <td>{{d_order.order.total_amount}}</td>
+      <td id = "status-{{d_order.order.id}}">{{d_order.status}}</td>
+      <td><a href="{%url 'driver_map' d_order.order.id%}">See Order</a></td>
+      <!--
+      <td>
+	<form action="{% url 'compute_distance'%}" method="post" id="deliver-{{d_order.order.id}}">
+	  {%csrf_token%}
+	  <button type="submit" class="btn btn-dark" onclick="getlocation({{d_order.order.id}}); return false;">Add</button>
+	</form>
+      </td>
+      -->
+    </tr>
+    {%endfor%}
+  </tbody>
+</table>
+
+{%else%}
+<p> you have no order</p>
+
+{%endif%}
+
+<!--
+
+<script type="text/javascript">
+
+  function getlocation(id) {
+      console.log('i am in getlocation');
+      
+      const form = document.getElementById("deliver-" + id);
+      if (!form) {
+          console.error('Form not found for ID: deliver-' + id);
+          return;
+      }
+      
+      const url = form.action;
+      console.log('i get the url'+url);
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+      console.log('csrftoken'+csrfToken);
+      
+      function success(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          console.log('Start fetch with latitude:', latitude, 'longitude:', longitude);
+	  
+	  fetch(url, {
+	      method: 'POST',
+	      headers: {
+		  'X-CSRFToken': csrfToken,
+		  'Content-Type': 'application/json'
+	      },
+	      body: JSON.stringify({
+		  'latitude': latitude,
+                  'longitude': longitude,
+                  'order_id': id
+              }),
+          })
+              .then(response => {
+		  console.log('Response received:', response);
+		  return response.json();  // Parse the JSON from the response
+              })
+              .then(data => {
+		  if (data.success) {
+                      console.log('Data is', data.success);
+
+                      const elem = document.getElementById('status-' + id);
+                      elem.innerHTML = "Delivered";
+		  } else {
+                      console.error("Data received but success is false");
+		  }
+              })
+              .catch(error => {
+		  console.error('Fetch error:', error);
+              });
+      }
+      
+      function error(err) {
+          console.error('Error in geolocation:', err);
+          alert("Sorry, no position available.");
+      }
+      
+      navigator.geolocation.watchPosition(success , error);  // Use getCurrentPosition for a one-time location fetch
+      console.log('Attempting to get the location');
+  }
+  
+
+</script>
+-->
+
+
+
+
+{%endblock%}
+

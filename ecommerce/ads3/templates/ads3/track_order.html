@@ -1,0 +1,136 @@
+
+{% extends 'ads3/base_menu.html' %}
+{%load static%}
+{%load is_driver%}
+{% block head %}
+<!-- leaflet css file-->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""/>
+
+<!-- Make sure you put this AFTER Leaflet's CSS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+	integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+	crossorigin=""></script>
+{% endblock %}
+
+{% block content %}
+
+{%if user|is_driver%}
+
+<form action= {%url 'driver_map' order_id %} id="myForm">
+  {% csrf_token %}
+</form>
+
+{%else%}
+
+<form action = {%url 'customer_map' order_id %} id="myForm">
+  {% csrf_token %}
+</form>
+
+{%endif%}
+
+<div id="map" style="height: 700px;"></div>
+
+<script type="text/javascript">
+
+
+  
+  
+  const form = document.getElementById('myForm');
+  const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  const url = form.action
+
+  var longitude = null;
+  var latitude = null;
+
+ 
+  document.addEventListener('DOMContentLoaded',startTracking(url));
+  
+  let map = null;
+  let marker = null;
+  let order_marker = null
+  
+  const carUrl = "{%static 'vehicle.png' %}";
+  var carIcon = L.icon({ iconUrl: carUrl,
+			 iconSize: [50, 50],
+			 iconAnchor: [22, 94],
+			 popupAnchor: [-3, -76],
+			 shadowUrl: '',
+			 shadowSize: [68, 95],
+			 shadowAnchor: [22, 94]
+		       });
+
+  
+  function displayDriver(url) {
+      fetch(url,{method:'GET',headers:{'X-CSRFToken':csrfToken,
+				       'X-Requested-With':'XMLHttpRequest',
+				       'Content-Type':'application/json',},
+		})
+          .then((response) => {
+              return response.json();
+	  })
+	  .then((data) => {
+	      
+	      if(data.exception === 'no-orderdriver'){
+		  
+		  document.getElementById('map').innerHTML = '<br><h5>Your Order Has Not Been Picked Yet</h5>';
+	      }
+	      else{
+		  //there is other way to check if is a driver in data in form and get is
+		  if(data.driver){
+
+		      longitude = data.order_longitude;
+		      latitude = data.order_latitude;
+
+		  }
+		  else{
+		      longitude = data.driver_longitude;
+		      latitude = data.driver_latitude;
+		      
+		  }
+	      	    
+		  if (!map) {
+		      // Initialize the map only if it hasn t been initialized
+		      map = L.map('map').setView([latitude,longitude], 17);
+		      
+                      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			  maxZoom: 19,
+			  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      }).addTo(map);
+		      
+                      // Add marker for the drivers position
+                      marker = L.marker([data.driver_latitude, data.driver_longitude],{icon:carIcon}).addTo(map);
+		      marker.bindPopup("<p>Hey !! I am your Driver<p> "+ "<b>"+data.name+"</b>");
+		      order_marker = L.marker([data.order_latitude,data.order_longitude]).addTo(map);
+		  } else {
+                      // If the map is already initialized, just move the marker
+		      //order_marker.setLatLng([data.order_latitude, data.order_longitude]);
+		      marker.setLatLng([data.driver_latitude, data.driver_longitude]);
+		      map.setView([latitude,longitude]);
+		      }
+		      
+                      
+                      
+		  
+	      }
+              })
+          .catch((error) => {
+              console.log("Error: " + error);
+          });
+      
+  }
+
+   function startTracking(url) {
+      // Call displaydriver immediately and then every 5 seconds
+      displayDriver(url);  // Initial call to display the driver
+      setInterval(() => {
+          displayDriver(url);
+      }, 5000);  // Repeat every 5 seconds
+  }
+  
+
+  
+  </script>
+
+{% endblock %}

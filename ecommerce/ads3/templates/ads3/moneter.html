@@ -1,0 +1,56 @@
+{%extends "ads3/base_menu.html"%}
+{% load is_driver %}
+
+
+{%block content%}
+
+{%if order_list%}
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Id</th>
+      <th scope="col">Date</th>
+      <th scope="col">Customer</th>
+      <th scope="col">Nubmer</th>
+      <th scope="col">Total</th>
+      <th scope="col">Status</th>
+      <th scope="col">Driver</th>
+      <th scope="col">Location</th>
+      
+    </tr>
+  </thead>
+  <tbody>
+    
+    {%for order in order_list%}
+    <tr id="row-{{order.id}}">
+      <th scope="row"></th>
+      <td><a href="{%url 'order_detail' order.id %}">{{order.id}}</a></td>
+      <td>{{order.created_at}}</td>
+      <td>{{order.owner.username}}</td>
+      <td>{{order.owner.phone_number}}</td>
+      <td>{{order.total_amount}}</td>
+      <td>{{order.status}}</td>
+      {%if order.status == "PR" or order.status == "DE" %}
+      <td>{{order.driverorder.driver.username}}</td>
+      {%else%}
+      <td>not Picked</td>
+      {%endif%}
+      <td><a href="{% url 'driver_map' order.id %}">See Order</a></td>
+      
+      <td>
+      </td>
+    </tr>
+    {%endfor%}
+  </tbody>
+  
+</table>
+
+{%else%}
+<p> you have no order</p>
+
+{%endif%}
+
+
+
+{%endblock%}

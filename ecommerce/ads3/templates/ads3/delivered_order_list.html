@@ -1,0 +1,49 @@
+{%extends "ads3/base_menu.html"%}
+
+
+
+{%block content%}
+
+
+{%if driverorder_list%}
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Order Id</th>
+      <th scope="col">Picked Up At</th>
+      <th scope="col">Total</th>
+      <th scope="col">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+    {%for d_order in driverorder_list%}
+    <tr>
+      <th scope="row"></th>
+      <td><a href="{%url 'order_detail' d_order.order.id %}">{{d_order.order.id}}</a></td>
+      <td>{{d_order.picked_at}}</td>
+      <td>{{d_order.order.total_amount}}</td>
+      <td>{{d_order.status}}</td>
+    </tr>
+    {%endfor%}
+    <tr>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>{{total}}</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+{%else%}
+<p> you have no order</p>
+
+{%endif%}
+
+
+
+
+{%endblock%}
+

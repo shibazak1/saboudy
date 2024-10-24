@@ -1,0 +1,445 @@
+
+{% extends "ads3/base_menu.html" %}
+{% load humanize %}
+{% load crispy_forms_tags %}
+
+{% block head %}
+<style>
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    display: none;
+    background-color: rgba(0, 0, 0, 0.5); /* Dim the background */
+  }
+
+  .tag {
+    border: 1px solid grey;
+    background-color: LightGreen;
+    padding: 2px 5px;
+    margin-right: 5px;
+  }
+
+  .comment {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+  }
+
+  /* Ensure full width for the product image on mobile */
+  .product-image {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Overlay for displaying full-size image -->
+<div id="overlay" class="overlay text-center"
+     onclick="document.getElementById('overlay').style.display = 'none';">
+  <img id="product-image-overlay" class="img-fluid mt-5" style="border: 3px solid black;" src="/media/{{ad3.variants.first.image}}">
+</div>
+
+<!-- Main Product Detail Section -->
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h1><strong>{{ ad3.title }}</strong></h1>
+
+      <!-- Product Image -->
+      {% if ad3.variants.first.image %}
+      <img id="product-image"class="product-image img-fluid" src="/media/{{ad3.variants.first.image}}" style="margin:20px"
+           onclick="document.getElementById('overlay').style.display = 'block';">
+      {% endif %}
+
+      <!-- Product Details -->
+      <div>
+        <!-- Tags Section -->
+        {% if ad3.tag.all %}
+        <p>
+	  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-tags" viewBox="0 0 16 16">
+	    <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>
+	    <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1z"/>
+	  </svg>
+          {% for tag in ad3.tag.all %}
+          <span class="tag">{{ tag }}</span>
+          {% endfor %}
+        </p>
+        {% endif %}
+
+        <!-- Updated at -->
+        <p>({{ ad3.updated_at|naturaltime }})</p>
+
+        <!-- Product Description -->
+        <p class="fw-light">{{ ad3.text }}</p>
+      </div>
+    </div>
+
+    <!-- Product Variant Options (Colors, Sizes, etc.) -->
+    <div class="col-md-4" style="margin-top:30px">
+      <table class="table table-bordered w-100">
+        <tr>
+          <th>Colors</th>
+          <td>
+            {% for color in colors %}
+            <button class="btn btn-lg choose-color" data-color="{{color.color__id}}"
+                    onclick="show({{color.color__id}})"
+                    style="background-color: {{color.color__color_code}}"></button>
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <th>Sizes</th>
+	  
+          <td>
+	    <div class="d-flex flex-wrap" >
+          {% for size in sizes %}  
+	    
+          <button data-price="{{size.price}}" data-size="{{size.size__title}}"
+		  class="btn btn-outline-secondary btn-sm choose-size color{{size.color__id}}"
+		  id="color-{{size.size__id}}"
+                  onclick="showPrice(this,'{{size.price}}','{{size.size__title}}','{{size.size__id}}');">{{size.size__title}}
+	  </button>
+          {% endfor %}
+	  </div>
+          </td>
+	  
+        </tr>
+        <tr>
+          <th>Price</th>
+          <td>$ <span id="product-price"></span></td>
+        </tr>
+      </table>
+      
+    </div>
+  </div>
+
+  <div class="input-group my-3" style="width:50%;">
+  <form method="post" id="addtocart-{{ad3.id}}">
+    {%csrf_token%}
+    
+    <div class="input-group mb-3">
+      
+      <input type="number" class="form-control" placeholder="" aria-label="" aria-describedby="button-addon2" value="1"id="productQty-{{ad3.id}}" style="width:30%">
+      <button class="btn btn-outline-secondary" type="button" id="button-addon2"
+	      
+	      onclick="addTocart('{%url 'add_to_cart' %}',{{ad3.id}},'{{ad3.title}}'); return false;"><i class="fa fa-shopping-cart"></i> Add to Cart</button>
+   
+      <!--
+      <button class="btn btn-primary btn-sm add-to-cart" type="button"
+	      onclick="addTocart('{%url 'add_to_cart' %}',{{ad3.id}},'{{ad3.title}}'); return false;"><i class="fa fa-shopping-cart"></i> Add to Cart</button>
+-->
+    </div>
+    </div>
+<!--
+    <input type="number" value="1" class="form-control" id="productQty-{{ad3.id}}" />
+    
+    <a href="#" onclick="addTocart('{%url 'add_to_cart' %}',{{ad3.id}},'{{ad3.title}}'); return false;">Add Cart </a>
+    -->
+    
+  </form>
+  <!-- Comment Section -->
+
+  
+  <div class="comments-section">
+    <h3>Comments</h3>
+
+    {% if user.is_authenticated %}
+    <form action="{% url 'comment_create' ad3.id %}" method="post">
+      {% csrf_token %}
+
+       <div class="input-group mb-3">
+	 <input type="text" name="text" class="form-control" placeholder="Add your comment here..." required>
+	 
+	 <button class="btn btn-outline-secondary input-group-text" type="submit" id="button-addon2">
+
+	   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cursor-fill" viewBox="0 0 16 16">
+	     <path d="M14.082 2.182a.5.5 0 0 1 .103.557L8.528 15.467a.5.5 0 0 1-.917-.007L5.57 10.694.803 8.652a.5.5 0 0 1-.006-.916l12.728-5.657a.5.5 0 0 1 .556.103z"/>
+	   </svg>
+	 </button>
+       </div>
+
+      
+    <!--
+	<div class="input-group my-3">
+	  {{ comment_form|crispy }}
+	  <button class="btn btn-outline-secondary input-group-text " type="submit" id="button-addon2"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-cursor-fill" viewBox="0 0 16 16">
+	      <path d="M14.082 2.182a.5.5 0 0 1 .103.557L8.528 15.467a.5.5 0 0 1-.917-.007L5.57 10.694.803 8.652a.5.5 0 0 1-.006-.916l12.728-5.657a.5.5 0 0 1 .556.103z"/>
+	  </svg></button>
+	  -->
+      </div>
+      
+      
+
+	<!--      
+      <input type="submit" value="Submit" class="btn btn-success">
+      <a href="{% url 'ad_detail' ad3.id %}" class="btn btn-secondary">Cancel</a>
+      -->
+    </form>
+    {% endif %}
+
+    <!-- Displaying Existing Comments -->
+    {% for comment in comments %}
+    <div class="comment">
+      <p>{{ comment.text }} <small>({{ comment.updated_at|naturaltime }})</small></p>
+
+      <!-- Comment Controls (Edit/Delete) -->
+      {% if user == comment.owner %}
+      <a href="{% url 'comment_delete' comment.id %}" class="text-danger"><i class="fa fa-trash"></i></a>
+      {% endif %}
+    </div>
+    {% endfor %}
+    </div>
+  </div>
+   
+
+
+
+<script type="text/javascript">
+
+  //read the variant to be json object or list of json object
+  var variants = {{product_variant|safe}};
+  console.log(variants);
+  
+  
+  console.log('set the goloble variable');
+  var color = null;
+  var size  = null;
+  var price = null;
+  var image_url = '/media/'+variants[0]['image'];
+
+
+  
+  // Utility function to show/hide sizes
+  function toggleSizeDisplay(sizes,color_sizes) {
+      for (var i = 0; i < sizes.length; i++) {
+          sizes[i].style.display = 'none';
+          
+      }
+
+      for(var i=0; i < color_sizes.length;i++){
+	  color_sizes[i].style.display = 'block';
+	  color_sizes[i].classList.remove('active');
+      }
+      color_sizes[0].classList.add('active');
+      
+
+  }
+  
+  // Utility function to update the displayed price
+  function updatePriceDisplay(price) {
+      document.getElementById("product-price").innerHTML = price;
+  }
+
+
+   // Utility function to log the current product state
+  function consoleProductState() {
+      console.log("Color: " +color);
+      console.log("Size: " +size);
+      console.log("Price: " +price);
+  }
+
+
+
+  // Update the displayed image based on the color
+  function updateImage(color_id) {
+      
+      var selectedVariant = variants.find(variant => variant.color__id == color_id);
+
+      if(selectedVariant){
+
+	  document.getElementById("product-image").src = "/media/"+ selectedVariant.image;
+	  document.getElementById("product-image-overlay").src = "/media/"+ selectedVariant.image;
+	  //set the image to selected one to be send to cart
+			  image_url = "/media/"+ selectedVariant.image;
+      }
+      
+  }
+
+
+
+
+
+
+			  
+  
+  
+  window.onload = function() {
+      var sizes = document.getElementsByClassName("choose-size");
+      var colors = document.getElementsByClassName("choose-color");
+      
+      var color_id = variants[0]['color__id'];
+      var color_sizes = document.getElementsByClassName('color'+color_id);
+      
+
+      
+      toggleSizeDisplay(sizes,color_sizes);
+      
+      // Set the variables for the first color, size, and price
+
+      color = colors[0].dataset.color;  
+      size = sizes[0].dataset.size;
+      price = sizes[0].dataset.price;
+  
+      //document.getElementById("product-price").innerHTML = price;
+      updatePriceDisplay(price);
+  
+      // Print the data
+      consoleProductState();
+  }
+  // Show color-specific sizes
+  function show(color_id) {
+      var sizes = document.getElementsByClassName("choose-size");
+      var colorSizes = document.getElementsByClassName("color" + color_id);
+      
+      toggleSizeDisplay(sizes,colorSizes);
+      
+      
+       
+      // Update the global color, size, and price variables
+      color = color_id;
+      size  = colorSizes[0].dataset.size;
+      price = colorSizes[0].dataset.price;
+
+      consoleProductState();
+      // Update the displayed price
+      updatePriceDisplay(price);
+      //document.getElementById("product-price").innerHTML = price;
+
+      //change image
+      
+
+      updateImage(color_id);
+
+			  
+      
+  }
+  
+  // Show selected price and update size
+  function showPrice(button,size_price,size_title,size_id) {
+
+
+      //get all size buttons for the selected color
+      var activeButtons = document.getElementsByClassName('color'+color);
+      
+
+      //de active them
+      if(activeButtons){
+	  for(var i=0;i<activeButtons.length;i++){
+
+	      activeButtons[i].classList.remove('active');
+	  }
+      }
+
+      
+      size = size_title;  // Update the global size variable
+      price = size_price;    // Update the global price variable
+
+      //add active class to the clicked button
+      button.classList.add("active");
+      consoleProductState();
+      
+      // Update the displayed price
+      updatePriceDisplay(size_price);
+     // document.getElementById("product-price").innerHTML = size_price;
+
+    
+      
+      // change image according to selected size and color
+      var selectedVariant = variants.find(variant =>  variant.size__id == size_id && variant.color__id == color);
+
+      if (selectedVariant) {
+	  document.getElementById("product-image").src = "/media/"+ selectedVariant.image;
+	  document.getElementById("product-image-overlay").src = "/media/"+ selectedVariant.image;
+	  // set image url to selected one 
+	  image_url = "/media/"+ selectedVariant.image;
+      }
+  }
+    
+			  
+  //add to cart and fetch the data to the server
+  
+  function addTocart(url,product_id,product_title){
+      var form = document.getElementById("addtocart-"+product_id);
+      //var url = form.action;
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+      //get the button to diable it and make a spiner
+      //const button = form.querySelector('button[type="submit"]');
+      
+      const button = document.getElementById("button-addon2");
+      
+      button.disabled = true;
+      button.innerHTML = '<div class="spinner-border" role="status"></div>';
+      
+      
+      
+      var quantity = document.getElementById("productQty-"+product_id).value;
+      
+      console.log("id and qauntity "+product_id,product_title,quantity,url);
+      
+
+      //start fetch data
+      
+      
+      fetch(url, {
+	  method: 'POST',
+	  headers: {
+	      'Content-Type': 'application/json',
+	      'X-CSRFToken': csrfToken // Django s CSRF token for security
+	  },
+	  
+	  // Correct header name
+	  body: JSON.stringify({"id":product_id,
+				"title":product_title,
+				"color":color,
+				"size":size,
+				"price":price,
+				"quantity":quantity,
+				"image_url":image_url}),
+      })
+	  .then((response) => {
+	      if(response.status === 403){
+
+		  return response.json().then(data =>{
+		      window.location.href = data.redirect_url;
+		      
+		  });
+	      }
+	      if (!response.ok) {  // Check if the response is OK (status in the range 200-299)
+		  throw new Error('Network response was not ok');
+	      }
+	      return response.json();  // Parse the JSON from the response
+	  })
+	  .then((data) => {
+    console.log("Server responded with data:", data);
+    console.log("Server responded with data length:", data.length);
+	      button.disabled = false;
+    button.innerHTML = 'Add To Cart';
+    var cartLength = document.getElementById('cart-length');
+    cartLength.innerHTML = data.length;
+
+	      
+	  })
+	  .catch((error) => {
+
+	      console.error("Fetch error:", error);
+              alert("Error: " + error.message);
+              button.disabled = false;
+              button.innerHTML = 'Add To Cart';
+	  });
+
+      
+
+  }
+
+
+  
+
+
+  </script>
+{% endblock %}
