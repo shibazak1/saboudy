@@ -2,89 +2,20 @@
 
 {%load custom_filter%}
 {%block content%}
-<!--
-    
-<p class="fw-medium" style="margin-top:10px">Thank you dear <b>{{cart.user}}</b> for your purchase!
-  Your order has been successfully placed and is now being processed. Below are the details of your order<br>
 
-  <b>Order ID :{{cart.id}}</b>
-  
-</p>
--->
-<!--
-<p class="fw-medium" style="margin-top:10px"> Thank you dear {{cart.user}} for using our market your order cost with deliver is <b>{{total}}<b>
-  if you wont to complet the order click on the button below
-</p>
--->
-
-
-<!--
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">Product</th>
-      <th scope="col">Quantity</th>
-      <th scope="col">Price</th>
-      <th scope="col">Total</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      {%for item in items%}
-      <th scope="row">{{item.id}}</th>
-      <td>{{item.product.title}}</td>
-      <td>{{item.quantity}}</td>
-      <td>{{item.product.price}}</td>
-      <td>{{ item.quantity|multiply:item.price }}</td>
-    </tr>
-    
-    {%endfor%}
-    
-    <tr>
-      <th scope="row"></th> 
-      <td></td>
-      <td></td>
-      <td></td>
-      <td><strike>{{cart_total}}<strike/></td>
-    </tr>
-    
-    <tr>
-      <th scope="row"></th> 
-      <td></td>
-      <td></td>
-      <td>Delivery Cost </td>
-      <td>+{{delivery_cost}}</td>
-    </tr>
-    
-    <tr>
-      <th scope="row"></th> 
-      <td></td>
-      <td></td>
-      <td>Final Cash</td>
-      <td>{{total}}</td>
-    </tr>
-    
-  </tbody>
-</table>
-
-<div style="margin:200px">
-
-  <a class="btn btn-dark" href="{%url 'order' cart.id %}" role="button"> <b>Complete Order </b></a>
--->
 
 
 
   <div>
     
-  <h5>Your Cart <span class="badge rounded-pill bg-primary">{{items.count}}</span></h5>
+  <h5>Your Cart <span class="badge rounded-pill bg-primary">{{item_count}}</span></h5>
   
   <div class="card" style="width: 18rem;">
     <ul class="list-group list-group-flush">
-      {% for item in items %}
+      {% for key , item in items.items %}
       <li class="list-group-item d-flex justify-content-between align-items-center">
         <div>
-          <strong>{{ item.product.title }}</strong><br>
+          <strong>{{ item.title }}</strong><br>
           <small>Brief description</small>
         </div>
         <span>{{ item.quantity|multiply:item.price }} LY</span>
@@ -114,7 +45,7 @@
     </ul>
 
     <div class="card-footer">
-      <a class="btn btn-dark" href="{%url 'order' cart.id %}" role="button"> <b>Complete Order </b></a>
+      <a class="btn btn-dark" href="{%url 'order' %}" role="button"> <b>Complete Order </b></a>
     </div>
   </div>
 </div>

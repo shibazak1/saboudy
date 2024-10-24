@@ -167,7 +167,7 @@ body {
 
 		      </a>
 			<br><br>
-			<form action="{%url 'add_to_cart' ad.id %}" method="post">
+			<form action="{%url 'add_to_cart' %}" method="post">
 			  {%csrf_token%}
 			  
 			  <button type="submit" class="btn btn-primary" >Add Cart</butto>
@@ -234,7 +234,7 @@ body {
 	  
                 {% if ad.content_type %}
                 <a href="{% url 'ad_detail' ad.id %}">
-                    <img src="{% url 'ad_pic' ad.id %}" class="card-img-top" alt="{{ ad.title }}" width="300" height="200">
+                    <img src="/media/{{ad.variants.first.image}}" class="card-img-top" alt="{{ ad.title }}" width="300" height="200">
                 </a>
                 {% endif %}
                 <div class="card-body">
@@ -249,10 +249,16 @@ body {
                             <i class="bi bi-trash"></i> Delete
                         </a>
                     </p>
-		   
-                    <form action="{% url 'add_to_cart' ad.id %}" method="post" id = "add-cart-{{ad.id}}" class="mt-2" >
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-dark" onclick="addcart({{ad.id}}); return false;">Add to Cart</button>
+		    
+                    <form action="{% url 'add_to_cart'%}" method="post" id = "add-cart-{{ad.id}}" class="mt-2" >
+                      {% csrf_token %}
+		      <input type="hidden" name="title" value="{{ ad.title }}">
+		      <input type="hidden" name="color" value="{{ ad.variants.first.color.id }}">
+		      <input type="hidden" name="size" value="{{ ad.variants.first.size }}">
+		      <input type="hidden" name="price" value="{{ ad.variants.first.price }}">
+		      <input type="hidden" name="image_url" value="/media/{{ ad.variants.first.image }}">
+		      <input type="hidden" name="quantity" value="1">
+                      <button type="submit" class="btn btn-dark" onclick="addcart({{ad.id}}); return false;">Add to Cart</button>
                     </form>
                     {% endif %}
                     {% if user.is_authenticated %}
@@ -316,51 +322,68 @@ function favpost(url, id) {
         });
 }
 
-function addcart(itemId) {
-    const form = document.getElementById("add-cart-"+itemId);
-    const url = form.action;
-    const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
-    const formData = new FormData(form);
-    const button = form.querySelector('button[type="submit"]');
+  function addcart(itemId) {
+      const form = document.getElementById("add-cart-"+itemId);
+      const url = form.action;
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+      const formData = new FormData(form);
+      const button = form.querySelector('button[type="submit"]');
+      
+      // get data for the first variation of the product
+      const title = form.querySelector('input[name="title"]').value;
+      const color = form.querySelector('input[name="color"]').value;
+      const size = form.querySelector('input[name="size"]').value;
+      const price = form.querySelector('input[name="price"]').value;
+      const quantity = form.querySelector('input[name="quantity"]').value;
+      const image_url = form.querySelector('input[name="image_url"]').value;
 
-    button.disabled = true;
-    button.innerHTML = '<div class="spinner-border" role="status"></div>';
-    // Execute a function after 2 seconds (2000 milliseconds)
-    setTimeout(function() {
-	console.log("This message appears after 2 seconds");
-    }, 5);
-
+      button.disabled = true;
+      button.innerHTML = '<div class="spinner-border" role="status"></div>';
+      // Execute a function after 2 seconds (2000 milliseconds)
+      setTimeout(function() {
+	  console.log("This message appears after 2 seconds");
+      }, 5);
+      
     
     
-    fetch(url, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': csrfToken },  // Correct header name
-        body: formData,
-    })
-    .then((response) => {
-        if (!response.ok) {  // Check if the response is OK (status in the range 200-299)
-            throw new Error('Network response was not ok');
-        }
-        return response.json();  // Parse the JSON from the response
-    })
-    .then((data) => {
-        console.log("Server responded with data:", data);
-    if (data.success) {
-
-    button.disabled =false;
-    button.innerHTML = 'Add To Cart';
-
-    
-        } else {
-            alert("There was an error adding the item to the cart.");
-        }
-    })
-    .catch((error) => {
-        console.error("Fetch error:", error);
-        alert("Error: " + error.message);
-    });
-}
-
+      fetch(url, {
+          method: 'POST',
+	  headers: {
+	      'Content-Type': 'application/json',
+	      'X-CSRFToken': csrfToken },  // Correct header name
+          body:JSON.stringify({"id":itemId,
+			       "title":title,
+			       "color":color,
+			       "size":size,
+			       "price":price,
+			       "quantity":quantity,
+			       "image_url":image_url,
+			      }),
+      })
+	  .then((response) => {
+              if (!response.ok) {  // Check if the response is OK (status in the range 200-299)
+		  throw new Error('Network response was not ok');
+              }
+              return response.json();  // Parse the JSON from the response
+	  })
+	  .then((data) => {
+              console.log("Server responded with data:", data);
+	      if (data) {
+		  
+		  button.disabled =false;
+		  button.innerHTML = 'Add To Cart';
+		  
+		  
+              } else {
+		  alert("There was an error adding the item to the cart.");
+              }
+	  })
+	  .catch((error) => {
+              console.error("Fetch error:", error);
+              alert("Error: " + error.message);
+	  });
+  }
+  
 
 
 

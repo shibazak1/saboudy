@@ -96,7 +96,8 @@
                 });
 
                 console.log('I am about to register sync');
-                return swRegistration.sync.register('sync-track-driver-location');
+    return swRegistration.sync.register('sync-track-driver-location');
+    console.log("i finshied regester the sync");
             })
             .catch((error) => {
                 console.log('Background sync failed: ' + error);

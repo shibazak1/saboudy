@@ -21,9 +21,9 @@
     {%for item in items%}
     <tr>
       <th scope="row">{{item.id}}</th>
-      <td>{{item.product.title}}</td>
+      <td>{{item.product_variant.product.title}}</td>
       <td>{{item.quantity}}</td>
-      <td>{{item.product.price}}</td>
+      <td>{{item.product_variant.price}}</td>
       <td>{{item.price}}</td>
     </tr>
     {%endfor%}

@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q # Q() object that take key word args (lookup field ) that represent a condition used in a query to sql 
 from django.views import View
-from .models import Ad3 , Coment , Favourite, Ad_Tage,Tage, Cart, CartItem, Order, OrderItem,Driver ,DriverOrder,MyUser
+from .models import Ad3 , Coment , Favourite, Ad_Tage,Tage, Cart, CartItem, Order, OrderItem,Driver ,DriverOrder,MyUser,ProductVaraint,Color,Size
 from .forms import AdForm , CommentForm, CustomUserCreationForm
 
 from django.views.generic import ListView
@@ -254,12 +254,27 @@ class AdListView(OwnerListView,View):
         return render(request,self.template_name,ctx)
 
 
-
+ 
 class AdDetailView(IsCustomer,View):
     template_name = "ads3/detial.html"
 
     def get(self,request,pk):
         ad_object = get_object_or_404(Ad3,id=pk)
+        colors = ProductVaraint.objects.filter(product=ad_object).values("color__id","color__title","color__color_code").distinct()
+        sizes = ProductVaraint.objects.filter(product=ad_object).values("size__id","size__title","price","color__id").distinct()
+
+        #send the all varaint of this product
+        product_variant = ProductVaraint.objects.filter(product=ad_object).values("id","image","color__id","size__id","price")
+
+        product_variant = [
+            {
+                **variant,
+                'price': float(variant['price'])  # Convert price to float
+            }
+            for variant in product_variant
+        ]
+        
+        print(colors)
         ad_comments = Coment.objects.filter(ad = ad_object).order_by("-updated_at")
         
         tags = Ad_Tage.objects.filter(ad=ad_object)
@@ -267,7 +282,14 @@ class AdDetailView(IsCustomer,View):
         print(tags)
         comment_form = CommentForm()
 
-        ctx = {"ad3":ad_object,"comments":ad_comments,"tags":tags,"comment_form":comment_form}
+        ctx = {
+            "ad3":ad_object,
+            "comments":ad_comments,
+            "tags":tags,
+            "comment_form":comment_form,
+            "colors":colors,
+            "sizes":sizes,
+            "product_variant":list(product_variant)}
 
         return render(request,self.template_name,ctx)
 
@@ -359,6 +381,7 @@ def stream_file(request,pk):
 
 
 
+
 class CommentCreateView(IsCustomer,LoginRequiredMixin,View):
 
     def post(self,request,pk):
@@ -421,6 +444,37 @@ class DeleteFavouriteView(IsCustomer,LoginRequiredMixin,View):
 class CartListView(IsCustomer,LoginRequiredMixin,View):
 
     template_name = "ads3/cart_items_list.html"
+
+    def get(self,request):
+        
+
+        #check if there is cart data in session otherwise return emty dictionary
+        cart_data = request.session.get('cartdata',{})
+
+        print(cart_data)
+        # list to store cart items
+        cart_items = []
+
+        # loop through all varaition where etch on is a dictionary and add it as list item
+        for variation_key ,item in cart_data.items():
+            cart_items.append({
+                
+                'variation_key':variation_key,
+                'id':item['id'],
+                'title':item['title'],
+                'color':item['color'],
+                'size':item['size'],
+                'quantity':item['quantity'],
+                'image_url':item['image_url'],
+                'price':item['price'],
+                'total_price':float(item['price']*int(item['quantity']))
+            })
+
+        total_cart_price = sum([item['total_price'] for item in cart_items])
+        ctx = {"items":cart_items,"total_cart_price":total_cart_price}
+        return render(request,self.template_name,ctx)    
+
+    """
     def get(self,request):
         #try to get the cart if 404 return we send empty dict indicat the cart is empty
         try:            
@@ -431,10 +485,96 @@ class CartListView(IsCustomer,LoginRequiredMixin,View):
             ctx = {}
 
         return render(request,self.template_name,ctx)
-
+"""
 
 
 class AddToCartView(LoginRequiredMixin,IsCustomer, View):
+    
+    def post(self, request):
+
+        #del request.session['cartdata']
+        
+        data = json.loads(request.body)
+        
+        # Generate a unique key for each product variation using product_id, color, and size
+        variation_key = f"{data['id']}_{data['color']}_{data['size']}_{data['price']}"
+        print(f" the key is {variation_key}")
+
+        # Create a dictionary to hold the new item data
+        new_cart_item = {
+            'id':data['id'],
+            'title': data['title'],
+            'color': data['color'],
+            'size': data['size'],
+            'quantity': int(data['quantity']),
+            'price': float(data['price']),
+            'image_url':data['image_url'],
+        }
+
+        # Check if the session already has a 'cartdata' key
+        if "cartdata" in request.session:
+            cart_data = request.session['cartdata']
+
+            # Check if the variation already exists in the cart
+            if variation_key in cart_data:
+                # If it does, update the quantity by adding the new quantity
+                cart_data[variation_key]['quantity'] += new_cart_item['quantity']
+            else:
+                # If the variation doesn't exist, add it as a new item to the cart
+                cart_data[variation_key] = new_cart_item
+
+            # Save the updated cart back to the session
+            request.session['cartdata'] = cart_data
+        else:
+            # If no cart exists in the session, create one and add the first variation
+            request.session['cartdata'] = {variation_key: new_cart_item}
+
+        # Print the session cart for debugging purposes
+        print(f"cartdata is {request.session['cartdata']}")
+
+        # Return the updated cart data as JSON
+        return JsonResponse({'data': request.session['cartdata']})
+
+"""
+    def post(self,request):
+
+        data = json.loads(request.body)
+        
+        #del request.session['cartdate']
+        cart = {}
+        cart[str(data['id'])]={
+
+            #'id':request.GET['id'],
+            'title':data['title'],
+            'color':data['color'],
+            'size':data['size'],
+            'quantity':data['quantity'],
+            'price':data['price'],
+        }
+
+        print(cart)
+        
+        if "cartdata" in request.session:
+            if str(data['id']) in request.session['cartdata']:
+                cart_data = request.session['cartdata']
+                cart_data[str(data['id'])]['quantity'] = int(cart[str(data['id'])]['quantity'])
+                cart_data.update(cart_data)
+                request.session['cartdata'] = cart_data
+            else:
+                #cart_data = request.session['cartdata']
+                #cart_data.update(cart_data)
+                request.session['cartdata'] = cart
+        else:
+            request.session['cartdata'] = cart
+
+            
+
+        print(f"cartdata is {request.session['cartdata']}")
+        return JsonResponse({'data':request.session['cartdata']})
+
+        
+
+
     def post(self, request, pk):
         cart, created = Cart.objects.get_or_create(user=request.user, is_active=True)
         ad_product = get_object_or_404(Ad3, id=pk)
@@ -449,7 +589,73 @@ class AddToCartView(LoginRequiredMixin,IsCustomer, View):
         total_price = cart_item.quantity*cart_item.price
         total_amount = cart.total_price()
         return JsonResponse({'success': True, 'quantity': cart_item.quantity,'price':total_price,"total":total_amount})
+    """
+            
+
+class UpdateCartView(IsCustomer, LoginRequiredMixin, View):
     
+    def post(self, request):
+        remove = False
+        try:
+            # Attempt to parse the JSON data from the request body
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Invalid JSON data'})
+
+        # Ensure the 'key' is provided in the data
+        variation_key = data.get('key')
+        if not variation_key:
+            return JsonResponse({'success': False, 'message': 'Variation key missing'})
+
+        # Retrieve the cart data from the session
+        cart_data = request.session.get('cartdata', {})
+
+        # Check if the item exists in the cart
+        if variation_key in cart_data:
+            #get the total
+            total_cart_price = data.get('total_cart_price')
+            # Check if an 'action' (increment, decrement, remove) is specified
+            action = data.get('action', 'add')  # Default action is 'increment'
+
+            if action == 'add':
+                # Increase the quantity of the item
+                cart_data[variation_key]['quantity'] += 1
+                
+                #updataign the total 
+                total_cart_price = float(total_cart_price) + cart_data[variation_key]['price']    
+
+            elif action == 'delete':
+                # Decrease the quantity but ensure it doesn't drop below 1
+                if cart_data[variation_key]['quantity'] > 1:
+                    cart_data[variation_key]['quantity'] -= 1
+
+                    
+                    total_cart_price = float(total_cart_price) - cart_data[variation_key]['price']    
+                elif cart_data[variation_key]['quantity'] == 1:
+                    # Remove the item from the cart entirely
+                    #total_cart_price = float(total_cart_price) + cart_data[variation_key]['price']    
+                    cart_data.pop(variation_key)
+                    remove = True
+                    
+                    #return JsonResponse({'success': False, 'message': 'Quantity cannot be less than 1'})
+
+           
+            else:
+                return JsonResponse({'success': False, 'message': f'Invalid action: {action}'})
+
+            # Update the session with the modified cart data
+            request.session['cartdata'] = cart_data
+            if remove:
+                return JsonResponse({'success':True,'remove':True})
+                
+            return JsonResponse(
+                {'success': True,
+                 'quantity': cart_data[variation_key]['quantity'],
+                 'price':float(int(cart_data[variation_key]['quantity'])*cart_data[variation_key]['price']),
+                 'total_cart_price':total_cart_price})
+        
+        # If the item is not in the cart
+        return JsonResponse({'success': False, 'message': 'Item not found in cart'})
 
 
 class DeleteFromCart(IsCustomer,LoginRequiredMixin,View):
@@ -481,35 +687,63 @@ class DeleteFromCart(IsCustomer,LoginRequiredMixin,View):
 
 class DeliveryCost(IsCustomer,LoginRequiredMixin,View):
 
-    def post(self,request,cart_id):
+    def post(self,request):
 
-        data = json.loads(request.body)
-        
-        
-        longitude = data['longitude']
-        latitude = data['latitude']
-
-        request.session["lat"] =latitude
-        request.session["lng"] = longitude
+        try:
+            data = json.loads(request.body)
+            longitude = data['longitude']
+            latitude = data['latitude']
+            request.session["lat"] =latitude
+            request.session["lng"] = longitude
 
         
 
         
-        order_location = (latitude,longitude)
-        shope_location = (32.218900, 20.065400)
+            order_location = (latitude,longitude)
+            shope_location = (32.218900, 20.065400)
         
 
-        distance = geodesic(shope_location, order_location).km 
-         
-        delivery_cost = int(distance)
+            distance = geodesic(shope_location, order_location).km 
+            
+            delivery_cost = int(distance)
 
-        request.session["delivery_cost"] = delivery_cost
-        print(f"Delivey Cost {delivery_cost}")
+            request.session["delivery_cost"] = delivery_cost
+            print(f"Delivey Cost {delivery_cost}")
+        except JSONDecodeError:
+            return JsonResponse({'success':False,"message":"bad json"})
 
-        return JsonResponse({'success':True,'redirect_url':reverse("order_confirmation",args=[cart_id])})
+        return JsonResponse({'success':True,'redirect_url':reverse("order_confirmation")})
     
     
 
+
+def order_confirmation(request):
+
+    cart_data = request.session.get('cartdata',{})
+    
+    #get how many item in the cart
+    number_item = len(cart_data)
+
+    total_cart_price = sum([float(int(item['price'])*item['quantity']) for variation_key,item in cart_data.items()])
+
+    total_cost = request.session['delivery_cost'] + total_cart_price
+    
+    ctx = {"items":cart_data,"item_count":number_item,"cart_total":total_cart_price,"total":total_cost}
+
+    return render(request,"ads3/order_confirmation.html",ctx)
+
+    
+    """
+    cart = get_object_or_404(Cart,id=cart_id)
+    cart_items = CartItem.objects.filter(cart=cart)
+
+    
+    delivery_cost = request.session["delivery_cost"]
+    total = delivery_cost + cart.total_price()
+    
+    return render(request,"ads3/order_confirmation.html",
+                  {"cart":cart,"items":cart_items,"total":total,"cart_total":cart.total_price(),"delivery_cost":delivery_cost})
+    """
 
 
 
@@ -520,13 +754,52 @@ class DeliveryCost(IsCustomer,LoginRequiredMixin,View):
 
 class AddOrderView(IsCustomer,LoginRequiredMixin,View):
 
-    def get(self,request,cart_id):
+    def get(self,request):        
 
-        #data = json.loads(request.body)
+        #get the cart data from the session if exist
+        cart_data = request.session.get('cartdata',{})
+        # calculate the total price of the cart loop through all the item and sum the price *quantity
+        total_cart_price = sum([float(int(item['price'])*item['quantity']) for variation_key,item in cart_data.items()])
+        #get delivery cost form session
+        delivery_cost = request.session['delivery_cost']
+
+        #calculate the total cost of cart with delivey
+        total = total_cart_price + delivery_cost
         
+        #create order object
+        order = Order(owner=request.user,total_amount=total_cart_price,delivery_cost=delivery_cost,total=total)
 
-        #cart_id = data['cart_id']
+        # store location of the order from session
+        order.longitude = request.session["lng"]
+        order.latitude = request.session["lat"]
+        
+        print(f"order longitude {order.longitude} , order latitude {order.latitude}")
+        order.save()
 
+        # here we create  order item by looping though all the item in the cart_date dictionary of the session
+        for key, item in cart_data.items():
+            #eatch key is unique varaition of product and his value is {} contain the variation data
+            #get the product and other varaion data
+            ad = get_object_or_404(Ad3,id=item['id'])
+            color = get_object_or_404(Color,id=item['color'])
+            size = get_object_or_404(Size,title=item['size'])
+            price = item['price']
+            quantity = item['quantity']
+
+            # get the varaion object with this data 
+            product_variant = get_object_or_404(
+                ProductVaraint,product=ad,color=color,size=size,price=price)
+
+            # use the varaion object and other data to create order item 
+            OrderItem.objects.create(
+                order=order,product_variant=product_variant,quantity=quantity,price=float(price*quantity)).save()
+
+        # delete the data form the session
+        del request.session['cartdata']
+        return redirect(reverse("all"))
+
+        
+        """
         cart = get_object_or_404(Cart,id=cart_id,user=request.user)
         order = Order(owner=request.user,total_amount=cart.total_price())
 
@@ -561,21 +834,8 @@ class AddOrderView(IsCustomer,LoginRequiredMixin,View):
        
         #return JsonResponse({'success':True,'redirect_url':reverse("order_confirmation",args=[order.id])})
         # return render(request,"ads3/order_confirmation.html",{"order":order,"items":order_items})
-
+"""
        
-
-def order_confirmation(request,cart_id):
-
-    cart = get_object_or_404(Cart,id=cart_id)
-    cart_items = CartItem.objects.filter(cart=cart)
-
-    
-    delivery_cost = request.session["delivery_cost"]
-    total = delivery_cost + cart.total_price()
-    
-    return render(request,"ads3/order_confirmation.html",
-                  {"cart":cart,"items":cart_items,"total":total,"cart_total":cart.total_price(),"delivery_cost":delivery_cost})
-    
 
 
 
@@ -964,7 +1224,8 @@ class BaseMapView(View):
             print(self.driver.latitude,self.driver.longitude)
             return JsonResponse({"driver_latitude":self.driver.latitude,"driver_longitude":self.driver.longitude,
                                  "order_latitude":self.order.latitude,"order_longitude":self.order.longitude,
-                                 "name":self.driver.username})
+                                 "name":self.driver.username,
+                                 "driver":isinstance(request.user,Driver),})
             
             
         print(f"request type is => {request.method}")

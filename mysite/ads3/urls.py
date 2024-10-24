@@ -30,13 +30,16 @@ urlpatterns = [
 
     #Cart urls
     path("ads3/cart/list",views.CartListView.as_view(),name="cart_list"),
-    path("ads3/add/<int:pk>/cart",views.AddToCartView.as_view(),name="add_to_cart"),
+    #path("ads3/add/<int:pk>/cart",views.AddToCartView.as_view(),name="add_to_cart"),
+    path("ads3/add/cart",views.AddToCartView.as_view(),name="add_to_cart"),
+    path("ads3/update/cart",views.UpdateCartView.as_view(),name="update_cart"),
     path("ads3/delete/<int:item_pk>/cart",views.DeleteFromCart.as_view(),name="delete_from_cart"),
 
     #order stuff
-    path("ads3/<int:cart_id>/order",views.AddOrderView.as_view(),name="order"),
+    #path("ads3/<int:cart_id>/order",views.AddOrderView.as_view(),name="order"),
    # path("ads3/order/<int:order_id>/confirmation",views.order_confirmation,name="order_confirmation"),
-    path("ads3/order/<int:cart_id>/confirmation",views.order_confirmation,name="order_confirmation"),
+    path("ads3/order",views.AddOrderView.as_view(),name="order"),
+    path("ads3/order/confirmation",views.order_confirmation,name="order_confirmation"),
     path("ads3/order/list",views.OrderListView.as_view(),name="order_list"),
     path("ads3/order/<int:pk>/detail",views.OrderDetailView.as_view(),name="order_detail"),
     path("ads3/all/order/list",views.AllOrderListView.as_view(),name="all_order"),
@@ -53,7 +56,7 @@ urlpatterns = [
     path("ads3/driver/<int:order_id>/map",views.DriverMapView.as_view(),name="driver_map"),
 
     #delivery cost
-    path("ads3/delivery/<int:cart_id>/cost",views.DeliveryCost.as_view(),name="delivery_cost"),
+    path("ads3/delivery/cost",views.DeliveryCost.as_view(),name="delivery_cost"),
 
 
     #----

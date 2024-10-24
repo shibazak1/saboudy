@@ -45,11 +45,8 @@ class Ad3(models.Model):
     comments = models.ManyToManyField(settings.AUTH_USER_MODEL,through="Coment",related_name="comments_owner")
    # tags = models.ManyToManyField(Tage,through="Ad_Tage",related_name="tage_ad")
     tag = models.ManyToManyField(Tage,through="Ad_Tage",related_name="tage_ad")
-    
-    
-    
-    
 
+    
      # Picture
     picture = models.BinaryField(null=True, blank=True, editable=True)
     content_type = models.CharField(max_length=256, null=True, blank=True,
@@ -58,6 +55,53 @@ class Ad3(models.Model):
     # Shows up in the admin list
     def __str__(self):
         return self.title
+
+
+class Color(models.Model):
+    title=models.CharField(max_length=100)
+    color_code=models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name_plural='4. Colors'
+
+    def color_bg(self):
+        return mark_safe('<div style="width:30px; height:30px; background-color:%s"></div>' % (self.color_code))
+
+    def __str__(self):
+        return self.title
+
+
+# Size
+class Size(models.Model):
+    title=models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name_plural='5. Sizes'
+
+    def __str__(self):
+        return self.title
+
+    
+class ProductVaraint(models.Model):
+
+    product = models.ForeignKey(Ad3,related_name="variants",on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=7, decimal_places=2, null=True)
+
+    color  = models.ForeignKey(Color,on_delete=models.CASCADE)
+    size  = models.ForeignKey(Size,on_delete=models.CASCADE)
+    image=models.ImageField(upload_to="product_imgs/",null=True)
+    
+
+    def image_tag(self):
+        return mark_safe('<img src="%s" width="50" height="50" />' % (self.image.url))
+
+    def __str__(self):
+
+        return self.product.title
+
+    
+    
+
 
 
 class Coment(models.Model):
@@ -174,7 +218,7 @@ class Order(models.Model):
 class OrderItem(models.Model):
 
     order = models.ForeignKey(Order,on_delete=models.CASCADE)
-    product = models.ForeignKey(Ad3,on_delete=models.CASCADE)
+    product_variant = models.ForeignKey(ProductVaraint,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     price = models.DecimalField(max_digits=10,decimal_places=2)
     
